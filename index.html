@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>God-Tier Cinematic Slideshow</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100dvh; background: #000; overflow: hidden;
+        }
+
+        /* Dual background layers - 90% opacity */
+        .bg-layer {
+            position: fixed; inset: -40px; z-index: -1;
+            background-size: cover; background-position: center;
+            filter: blur(60px) brightness(0.4) saturate(1.2);
+            opacity: 0; transition: opacity 1.6s ease-in-out;
+        }
+
+        .bg-layer.visible {
+            opacity: 0.9; /* 90% as requested */
+        }
+
+        .slideshow-wrapper {
+            position: relative; width: min(95vw, 420px); aspect-ratio: 9 / 16;
+            border-radius: 20px; overflow: hidden; z-index: 1;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Base slide state */
+        .slide {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            opacity: 0; pointer-events: none; z-index: 1;
+        }
+
+        .slide img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+        }
+
+        /* === ANIMATION 1: Cinematic Scale + Blur === */
+        .slide.anim-1 {
+            transform: scale(0.85);
+            filter: blur(20px);
+            transition: all 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .slide.anim-1.active {
+            opacity: 1;
+            transform: scale(1);
+            filter: blur(0);
+            z-index: 5; pointer-events: auto;
+        }
+
+        /* === ANIMATION 2: 3D Rotate Y Flip === */
+        .slide.anim-2 {
+            transform: perspective(1000px) rotateY(90deg) scale(0.9);
+            transform-origin: left center;
+            transition: all 1.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .slide.anim-2.active {
+            opacity: 1;
+            transform: perspective(1000px) rotateY(0deg) scale(1);
+            z-index: 5; pointer-events: auto;
+        }
+
+        /* === ANIMATION 3: Bottom Slide + Elastic === */
+        .slide.anim-3 {
+            transform: translateY(100%) scale(0.8);
+            transition: all 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .slide.anim-3.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            z-index: 5; pointer-events: auto;
+        }
+
+        /* === ANIMATION 4: Radial Zoom Out === */
+        .slide.anim-4 {
+            transform: scale(2);
+            filter: brightness(0.3);
+            transition: all 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .slide.anim-4.active {
+            opacity: 1;
+            transform: scale(1);
+            filter: brightness(1);
+            z-index: 5; pointer-events: auto;
+        }
+
+        /* === ANIMATION 5: Corner Rotate + Scale === */
+        .slide.anim-5 {
+            transform: rotate(-15deg) scale(0.7) translate(-50px, -50px);
+            transform-origin: top left;
+            transition: all 1.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .slide.anim-5.active {
+            opacity: 1;
+            transform: rotate(0deg) scale(1) translate(0, 0);
+            z-index: 5; pointer-events: auto;
+        }
+
+        /* === ANIMATION 6: Elastic Bounce === */
+        .slide.anim-6 {
+            transform: scale(0.3) translateY(-100px);
+            transition: all 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        .slide.anim-6.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            z-index: 5; pointer-events: auto;
+        }
+
+        /* === ANIMATION 7: Left Slide with Perspective === */
+        .slide.anim-7 {
+            transform: perspective(1000px) translateX(-100%) rotateY(25deg);
+            transition: all 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .slide.anim-7.active {
+            opacity: 1;
+            transform: perspective(1000px) translateX(0) rotateY(0deg);
+            z-index: 5; pointer-events: auto;
+        }
+
+        /* === ANIMATION 8: Spiral Zoom === */
+        .slide.anim-8 {
+            transform: rotate(180deg) scale(0.2);
+            transition: all 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .slide.anim-8.active {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+            z-index: 5; pointer-events: auto;
+        }
+
+        /* Particle canvas */
+        #particleCanvas {
+            position: absolute; inset: 0; z-index: 10; pointer-events: none;
+        }
+
+        /* Vignette overlay */
+        .vignette {
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.3) 100%);
+            pointer-events: none; z-index: 2;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Two background layers for seamless cross-fading -->
+    <div class="bg-layer" id="bg1"></div>
+    <div class="bg-layer" id="bg2"></div>
+
+    <div class="slideshow-wrapper">
+        <!-- Image 1: Cinematic Scale + Blur -->
+        <div class="slide anim-1 active">
+            <img src="1.jpg.jpeg" alt="1">
+        </div>
+
+        <!-- Image 2: 3D Rotate Y Flip -->
+        <div class="slide anim-2">
+            <img src="2.jpg.jpeg" alt="2">
+        </div>
+
+        <!-- Image 3: Bottom Slide + Elastic -->
+        <div class="slide anim-3">
+            <img src="3.jpg.jpeg" alt="3">
+        </div>
+
+        <!-- Image 4: Radial Zoom Out -->
+        <div class="slide anim-4">
+            <img src="4.jpg.jpeg" alt="4">
+        </div>
+
+        <!-- Image 5: Corner Rotate + Scale -->
+        <div class="slide anim-5">
+            <img src="5.jpg.jpeg" alt="5">
+        </div>
+
+        <!-- Image 6: Elastic Bounce -->
+        <div class="slide anim-6">
+            <img src="6.jpg.jpeg" alt="6">
+        </div>
+
+        <!-- Image 7: Left Slide with Perspective -->
+        <div class="slide anim-7">
+            <img src="7.jpg.jpeg" alt="7">
+        </div>
+
+        <!-- Image 8: Spiral Zoom -->
+        <div class="slide anim-8">
+            <img src="8.jpg.jpeg" alt="8">
+        </div>
+
+        <!-- Effects -->
+        <div class="vignette"></div>
+        <canvas id="particleCanvas"></canvas>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            const bg1 = document.getElementById('bg1');
+            const bg2 = document.getElementById('bg2');
+            
+            let current = 0;
+            let particles = [];
+            let activeBg = bg1;
+
+            // Initialize first background
+            bg1.style.backgroundImage = `url('${slides[0].querySelector('img').src}')`;
+            bg1.classList.add('visible');
+
+            // Canvas setup
+            function resizeCanvas() {
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = canvas.offsetWidth * dpr;
+                canvas.height = canvas.offsetHeight * dpr;
+                ctx.scale(dpr, dpr);
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Enhanced particle burst
+            function spawnParticles() {
+                const w = canvas.offsetWidth, h = canvas.offsetHeight;
+                for (let i = 0; i < 30; i++) {
+                    particles.push({
+                        x: Math.random() * w, y: Math.random() * h,
+                        vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3,
+                        r: Math.random() * 3 + 1,
+                        alpha: Math.random() * 0.5 + 0.1,
+                        life: Math.random() * 60 + 40,
+                        color: `hsla(${240 + Math.random() * 60}, 90%, 70%, ${Math.random() * 0.4 + 0.1})`
+                    });
+                }
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    let p = particles[i];
+                    ctx.globalAlpha = p.alpha * Math.max(0, p.life / 100);
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    p.x += p.vx; p.y += p.vy;
+                    p.r *= 0.97; p.life -= 1;
+                    if (p.life <= 0 || p.r < 0.3) particles.splice(i, 1);
+                }
+                ctx.globalAlpha = 1;
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+
+            // Cinematic transition logic
+            function nextSlide() {
+                const next = (current + 1) % slides.length;
+                const nextSrc = slides[next].querySelector('img').src;
+                const inactiveBg = activeBg === bg1 ? bg2 : bg1;
+                
+                // Prepare background layer
+                inactiveBg.style.backgroundImage = `url('${nextSrc}')`;
+                
+                // Cross-fade backgrounds at 90% opacity
+                activeBg.classList.remove('visible');
+                inactiveBg.classList.add('visible');
+                activeBg = inactiveBg;
+                
+                // Trigger unique animation for each slide
+                slides[current].classList.remove('active');
+                slides[next].classList.add('active');
+                
+                // Particle burst on transition
+                spawnParticles();
+                
+                current = next;
+            }
+
+            // Auto-advance every 2.5 seconds (giving time for longer animations)
+            setInterval(nextSlide, 2500);
+        });
+    </script>
+
+</body>
+</html>
